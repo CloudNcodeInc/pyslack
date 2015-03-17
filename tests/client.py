@@ -30,10 +30,8 @@ class ClientTest(unittest.TestCase):
         reply = {"ok": False, "error": "There was an error"}
         r_post.return_value.json.return_value = reply
 
-        with self.assertRaises(pyslack.SlackError) as context:
+        with self.assertRaisesRegexp(pyslack.SlackError, reply["error"]):
             client.chat_post_message('#channel', 'message')
-
-        self.assertEqual(context.exception.message, reply["error"])
 
     @patch('requests.post')
     def test_rate_limit(self, r_post):
@@ -48,7 +46,7 @@ class ClientTest(unittest.TestCase):
             client.chat_post_message('#channel', 'message')
 
         self.assertEqual(r_post.call_count, 1)
-        self.assertGreater(client.blocked_until, 
+        self.assertGreater(client.blocked_until,
                 datetime.datetime.utcnow() + datetime.timedelta(seconds=8))
 
         # A second send attempt should also throw, but without creating a request
